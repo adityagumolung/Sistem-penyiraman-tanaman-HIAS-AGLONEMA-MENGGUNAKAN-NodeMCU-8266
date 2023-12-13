@@ -1,0 +1,103 @@
+                                                        //Penyiram tanaman otomatis pada TANAMAN HIAS AGLONEMA
+
+//INFO DEVICE PADA BLYNK
+#define BLYNK_PRINT Serial
+#define BLYNK_TEMPLATE_ID "TMPL6SfwS7vA5"
+#define BLYNK_TEMPLATE_NAME "sistem penyiram tanaman"
+#define BLYNK_AUTH_TOKEN "wVjBcyXSkye984z8d-nj-INCYkGul4wI"
+
+//LIBRARY YANG DIGUNAKAN PADA BASE PROJEK
+#include <SPI.h>
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27,16,2);                 //Inisial Untuk Module LCD I2C 16x2
+
+char auth[] = "wVjBcyXSkye984z8d-nj-INCYkGul4wI"; //ISI TOKEN PADA APLIKASI BLYNX ANDROID
+char ssid[] = "GalaxyPersonal";                   //NAMA HOTSPOT yang akan digunakan
+char pass[] = "TehKotak32";                       //password hotspot yang akan digunakan
+
+
+
+const int sensorTanah = A0;    //inisialisasi pin sensor
+const int relay = D6;          //inisialisasi pin relay 
+
+
+void setup() {
+Serial.begin (9600);           //memanggil serial monitor
+pinMode(sensorTanah, INPUT);   //menetapkan sensor tanah atau pin A0 sebagai input
+pinMode(relay, OUTPUT);        //menetapkan relay atau pin D6 sebagai output
+Blynk.begin(auth, ssid, pass);
+delay (100);
+
+}
+
+void loop() {
+int dataAnalog = analogRead (sensorTanah);  //membaca nilai dari pin sensor soil moisture
+    dataAnalog = map(dataAnalog, 718, 290, 0, 100);  //DATA kalibrasi nilai dari pin sensor soil moisture
+    
+//print hasil ke serial monitor
+     Serial.print ("A0 : ");
+     Serial.print (dataAnalog);
+     
+//print hasil ke blink
+     Blynk.virtualWrite(V1, "NILAI SENSOR");
+     Blynk.virtualWrite(V0, dataAnalog);
+     Blynk.run();
+
+//cara kerja sistem sensor soil moisture
+if (dataAnalog > 60) {             //jika kelembaban tanah > 60, maka pompa OFF pada BUNGA AGLONEMA
+  Serial.println("Tanah Basah"); 
+  {
+  digitalWrite (relay, LOW);
+  lcd.init();                      // initialize the lcd 
+  // Print a message to the LCD.
+  lcd.backlight();
+  lcd.setCursor(2,0);
+  lcd.print("T. Telah Basah");
+  lcd.setCursor(0,1);
+  lcd.print("NILAI SENSOR:");
+  lcd.print (dataAnalog);
+  
+   
+}
+  
+  
+  }
+
+ else if (dataAnalog > 65) {
+  Serial.println("Tanah Basah"); 
+   {
+  digitalWrite (relay, HIGH);
+  lcd.init();                      // initialize the lcd 
+  // Print a message to the LCD.
+  lcd.backlight();
+  lcd.setCursor(3,0);
+  lcd.print("K. Basah");
+  lcd.setCursor(0,1);
+  lcd.print("NILAI SENSOR:");
+  lcd.print (dataAnalog);
+  
+   
+}
+  
+  
+  }
+
+ else if (dataAnalog  < 50) {      // jika kelembaban tanah < 50 pompa ON pada BUNGA AGLONEMA
+  Serial.println("Tanah Kering"); 
+   {
+  digitalWrite (relay, HIGH);
+  lcd.init();                      // initialize the lcd 
+  // Print a message to the LCD.
+  lcd.backlight();
+  lcd.setCursor(3,0);
+  lcd.print("T.TelahKering");
+  lcd.setCursor(0,1);
+  lcd.print("NILAI SENSOR:");
+  lcd.print (dataAnalog);
+  }
+}
+ delay (500);
+}
